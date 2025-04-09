@@ -1,0 +1,36 @@
+flowchart TD
+    A[Inicio]
+    B[Cargar imagen ID BMP distorsionada]
+    C[Cargar imagen IM BMP aleatoria]
+    D[Cargar máscara M]
+    E[Cargar archivos de rastreo .txt]
+    F[Analizar archivos de rastreo]
+    G[Identificar operaciones y orden aplicadas]
+    H[Iterar sobre cada transformación identificada]
+    I{Tipo de operación?}
+    J[Aplicar operación XOR inversa con IM]
+    K[Aplicar operación inversa de rotación]
+    L[Actualizar imagen transformada]
+    M{¿Quedan transformaciones pendientes?}
+    N[Obtener imagen original reconstruida]
+    O[Mostrar/Exportar imagen original]
+    P[Fin]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I -- "XOR" --> J
+    I -- "Rotación" --> K
+    J --> L
+    K --> L
+    L --> M
+    M -- "Sí" --> H
+    M -- "No" --> N
+    N --> O
+    O --> P
+
