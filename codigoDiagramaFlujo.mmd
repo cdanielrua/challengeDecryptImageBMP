@@ -1,36 +1,45 @@
-flowchart TD
+owchart TD
     A[Inicio]
-    B[Cargar imagen ID BMP distorsionada]
-    C[Cargar imagen IM BMP aleatoria]
-    D[Cargar máscara M]
-    E[Cargar archivos de rastreo .txt]
-    F[Analizar archivos de rastreo]
-    G[Identificar operaciones y orden aplicadas]
-    H[Iterar sobre cada transformación identificada]
-    I{Tipo de operación?}
-    J[Aplicar operación XOR inversa con IM]
-    K[Aplicar operación inversa de rotación]
-    L[Actualizar imagen transformada]
-    M{¿Quedan transformaciones pendientes?}
-    N[Obtener imagen original reconstruida]
-    O[Mostrar/Exportar imagen original]
-    P[Fin]
+    B[Cargar imagen BMP distorsionada]
+    C[Dividir imagen en bloques de 8 bits]
+    D[Seleccionar transformación a probar]
+    E{Tipo de transformación?}
+    F1[Desplazamiento a la derecha]
+    F2[Desplazamiento a la izquierda]
+    F3[Rotación a la derecha]
+    F4[Rotación a la izquierda]
+    F5[XOR]
+    G[Aplicar transformación al bloque]
+    H[Aplicar enmascaramiento con máscara específica]
+    I[Verificar resultado con archivo de referencia .txt]
+    J{¿Verificación exitosa?}
+    K[Guardar bloque validado]
+    L{¿Quedan bloques por procesar?}
+    M[Reconstruir imagen original]
+    N[Mostrar/Exportar imagen original]
+    O[Fin]
 
     A --> B
     B --> C
     C --> D
     D --> E
-    E --> F
-    F --> G
+    E -- "Despl. der." --> F1
+    E -- "Despl. izq." --> F2
+    E -- "Rot. der." --> F3
+    E -- "Rot. izq." --> F4
+    E -- "XOR" --> F5
+    F1 --> G
+    F2 --> G
+    F3 --> G
+    F4 --> G
+    F5 --> G
     G --> H
     H --> I
-    I -- "XOR" --> J
-    I -- "Rotación" --> K
-    J --> L
+    I --> J
+    J -- "Sí" --> K
+    J -- "No" --> D
     K --> L
-    L --> M
-    M -- "Sí" --> H
-    M -- "No" --> N
+    L -- "Sí" --> D
+    L -- "No" --> M
+    M --> N
     N --> O
-    O --> P
-
