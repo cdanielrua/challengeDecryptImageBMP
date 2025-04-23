@@ -1,3 +1,4 @@
+
 /*
  * Programa demostrativo de manipulaciónprocesamiento de imágenes BMP en C++ usando Qt.
  *
@@ -41,36 +42,29 @@ unsigned char* loadPixels(QString input, int &width, int &height);
 bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida);
 unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
 
-int main()
-{
-    // Definición de rutas de archivo de entrada (imagen original) y salida (imagen modificada)
-    QString archivoEntrada = "I_O.bmp";
-    QString archivoSalida = "I_D.bmp";
+int main(){
+    int cuantos;
+    bool verificado = 1;
 
+    // Definición de rutas de archivo de entrada (imagen original) y salida (imagen modificada)
+    QString archivoEntrada = "P1.bmp";
+    QString archivoSalida = "I_O.bmp";
+    QString archivoIm = "I_M.bmp";
+    QString archivomascara = "M.bmp";
     // Variables para almacenar las dimensiones de la imagen
     int height = 0;
     int width = 0;
+    int heightmascara = 0;
+    int widthmascara = 0;
 
     // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
     unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
 
-    // Simula una modificación de la imagen asignando valores RGB incrementales
-    // (Esto es solo un ejemplo de manipulación artificial)
-    for (int i = 0; i < width * height * 3; i += 3) {
-        pixelData[i] = i;     // Canal rojo
-        pixelData[i + 1] = i; // Canal verde
-        pixelData[i + 2] = i; // Canal azul
-    }
+    // Carga la imagen I_M BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *pixelImData = loadPixels(archivoIm, width, height);
 
-    // Exporta la imagen modificada a un nuevo archivo BMP
-    bool exportI = exportImage(pixelData, width, height, archivoSalida);
-
-    // Muestra si la exportación fue exitosa (true o false)
-    cout << exportI << endl;
-
-    // Libera la memoria usada para los píxeles
-    delete[] pixelData;
-    pixelData = nullptr;
+    // Carga la imagen MASCARA BMP en memoria dinámica y obtiene ancho y alto
+    unsigned char *pixelMascaraData = loadPixels(archivomascara, widthmascara, heightmascara);
 
     // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
     int seed = 0;
@@ -79,19 +73,112 @@ int main()
     // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
     unsigned int *maskingData = loadSeedMasking("M1.txt", seed, n_pixels);
 
+    // Simula una modificación de la imagen asignando valores RGB incrementales
+    // (Esto es solo un ejemplo de manipulación artificial)
+    /*for (int i = 0; i < width * height * 3; i += 3) {
+        pixelData[i] = i;     // Canal rojo
+        pixelData[i + 1] = i; // Canal verde
+        pixelData[i + 2] = i; // Canal azul
+    }*/
+
+    //ROTACIONES
+    /*for (int i = 0; i < width * height * 3; i += 3) {
+        pixelData[i] = static_cast<unsigned char>((pixelData[i]>>5) | (pixelData[i]<<(8-5)));     // Canal rojo
+        pixelData[i + 1] = static_cast<unsigned char>((pixelData[i+1]>>5) | (pixelData[i+1]<<(8-5))); // Canal verde
+        pixelData[i + 2] = static_cast<unsigned char>((pixelData[i+2]>>5) | (pixelData[i+2]<<(8-5))); // Canal azul
+    }*/
+
+    //XOR CON I_M
+    for (int i = 0; i < width * height * 3; i += 3) {
+        pixelData[i] = static_cast<unsigned char>(pixelData[i] ^ pixelImData[i]) ;     // Canal rojo
+        pixelData[i + 1] = static_cast<unsigned char>(pixelData[i + 1] ^ pixelImData[i + 1]); // Canal verde
+        pixelData[i + 2] = static_cast<unsigned char>(pixelData[i + 2] ^ pixelImData[i + 2]); // Canal azul
+    }
+
+    // Exporta la imagen modificada a un nuevo archivo BMP
+    bool exportI = exportImage(pixelData, width, height, archivoSalida);
+
+    //SUMAR MASCARA
+    /*for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
+
+        pixelData[i + seed]     = static_cast<unsigned char>(pixelData[i + seed]     + pixelMascaraData[i]);
+        pixelData[i + 1 + seed] = static_cast<unsigned char>(pixelData[i + 1 + seed] + pixelMascaraData[i + 1]);
+        pixelData[i + 2 + seed] = static_cast<unsigned char>(pixelData[i + 2 + seed] + pixelMascaraData[i + 2]);
+
+    }*/
+
+
+
+    //IMPRIMIR pixelData
+    /*for (int i = 0; i < width * height * 3; i += 3) {
+        cout << "Pixel " << (i / 3) << ": ("
+             << static_cast<int>(pixelData[i])     << ", "
+             << static_cast<int>(pixelData[i + 1]) << ", "
+             << static_cast<int>(pixelData[i + 2]) << ")\n";
+    }*/
+
+    //IMPRIMIR PARTE ENMASCARADA DE pixelData DESPUES DE ENMASCARAMIENTO
+    /*for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 3) {
+        cout << "Pixel " << (i / 3) << ": ("
+             << static_cast<int>(pixelData[i + seed] )    << ", "
+             << static_cast<int>(pixelData[(i + 1) + seed]) << ", "
+             << static_cast<int>(pixelData[(i + 2) + seed]) << ")\n";
+    }*/
+
+
+
+    // Muestra si la exportación fue exitosa (true o false)
+    cout << exportI << endl;
+
+
+    // Libera la memoria usada de I_M para los píxeles
+    delete[] pixelImData;
+    pixelImData = nullptr;
+
+    // Libera la memoria usada de Mascara para los píxeles
+    delete[] pixelMascaraData;
+    pixelMascaraData = nullptr;
+
     // Muestra en consola los primeros valores RGB leídos desde el archivo de enmascaramiento
-    for (int i = 0; i < n_pixels * 3; i += 3) {
+    /*for (int i = 0; i < n_pixels * 3; i += 3) {
         cout << "Pixel " << i / 3 << ": ("
              << maskingData[i] << ", "
              << maskingData[i + 1] << ", "
              << maskingData[i + 2] << ")" << endl;
+    }*/
+
+    // Comparar con el txt y decir si esta bueno
+    /*cuantos = 0;
+    for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
+        if((maskingData[i] % 256) != static_cast<int>(pixelData[i + seed])){
+            verificado = 0;
+        }
+        cout<<verificado;
+        cuantos+=1;
     }
+
+    cout<<cuantos;
+
+    if(verificado == 1){
+        cout<<"Si se cumple";
+    }
+    else{
+        cout<<"No se cumple";
+    }
+    */
+    //
+
+    // Libera la memoria usada para los píxeles
+    delete[] pixelData;
+    pixelData = nullptr;
 
     // Libera la memoria usada para los datos de enmascaramiento
     if (maskingData != nullptr){
         delete[] maskingData;
         maskingData = nullptr;
     }
+    cout<<endl<<"valor de semilla"<<seed<<endl;
+    cout<<endl<<"Cantidad de pixeles leidos"<<n_pixels<<endl;
 
     return 0; // Fin del programa
 }
@@ -200,7 +287,7 @@ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixel
  * Esta función abre un archivo de texto que contiene una semilla en la primera línea y,
  * a continuación, una lista de valores RGB resultantes del proceso de enmascaramiento.
  * Primero cuenta cuántos tripletes de píxeles hay, luego reserva memoria dinámica
- * y finalmente carga los valores en un arreglo de enteros.
+ * y finalmente carga los valores en un ARREGLO DE ENTEROS.
  *
  * @param nombreArchivo Ruta del archivo de texto que contiene la semilla y los valores RGB.
  * @param seed Variable de referencia donde se almacenará el valor entero de la semilla.
@@ -267,6 +354,9 @@ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixel
     // Retornar el puntero al arreglo con los datos RGB
     return RGB;
 }
+
+
+
 
 
 
