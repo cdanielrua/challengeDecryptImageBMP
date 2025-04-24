@@ -1,5 +1,6 @@
 #include <iostream>
 #include <bitset>
+#include <cstdint>  // Para usar uint8_t
 
 using namespace std;
 
@@ -39,4 +40,14 @@ void mostrar_resultados(uint8_t value, uint8_t mask) {
         cout << "Shift der " << i << ":           " << bitset<8>(shift_right(value, i)) << "  (pierde info)" << endl;
         cout << "Shift izq " << i << ":           " << bitset<8>(shift_left(value, i)) << "  (pierde info)" << endl;
     }
+}
+
+int main() {
+    uint8_t valor = 0b10110101;   // Valor de ejemplo
+    uint8_t mascara = 0b11001100; // Máscara para XOR
+
+    cout << "Demostración de transformaciones sobre 8 bits:\n" << endl;
+    mostrar_resultados(valor, mascara);
+
+    return 0;
 }
