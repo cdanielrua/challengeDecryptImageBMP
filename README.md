@@ -50,3 +50,25 @@ Pero debido a la **simetría en las rotaciones** (ej. rotar izquierda 1 es igual
 Estas funciones son suficientes para aplicar transformaciones seguras y reversibles sobre los datos binarios, con bajo costo computacional y buena capacidad de combinación.
 
 ---
+
+## 📌 Ejemplo de equivalencia entre rotaciones
+
+En una rotación circular de 8 bits, rotar a la izquierda `n` veces es **equivalente** a rotar a la derecha `8 - n` veces.
+
+> 🔄 `rotate_left(value, n) == rotate_right(value, 8 - n)`
+
+### 🔧 Ejemplo práctico
+
+Tomamos el valor `0b10110101` y lo rotamos:
+
+| Operación               | Resultado    |
+|-------------------------|--------------|
+| Valor original          | `10110101`   |
+| Rotación izquierda (3)  | `10101101`   |
+| Rotación derecha (5)    | `10101101`   |
+
+Como se ve en la tabla, ambos resultados son **idénticos**.
+
+### ✅ Conclusión
+
+Esto demuestra que, en lugar de implementar funciones para rotar en ambas direcciones, podemos optimizar el código utilizando **solo una dirección** (por ejemplo, rotación a la izquierda), y ajustar la cantidad de bits para obtener el mismo resultado.
