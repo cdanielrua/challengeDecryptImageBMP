@@ -43,12 +43,14 @@ bool exportImage(unsigned char* pixelData, int width,int height, QString archivo
 unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
 
 int main(){
-    int cuantos;
+
     bool verificado = 1;
+    int numero_verificaciones;
+    int tamaño_Arch, tamaño_Arch_Txt;
 
     // Definición de rutas de archivo de entrada (imagen original) y salida (imagen modificada)
-    QString archivoEntrada = "P1.bmp";
-    QString archivoSalida = "I_O.bmp";
+    //QString archivoEntrada = "I_D.bmp";
+    //QString archivoSalida = "I_O.bmp";
     QString archivoIm = "I_M.bmp";
     QString archivomascara = "M.bmp";
     // Variables para almacenar las dimensiones de la imagen
@@ -56,9 +58,22 @@ int main(){
     int width = 0;
     int heightmascara = 0;
     int widthmascara = 0;
+    bool exportI;
+
+    tamaño_Arch_Txt = 3;
+    tamaño_Arch = tamaño_Arch_Txt + 1;
+
+    char archivostxt[tamaño_Arch_Txt][10] = {"M2.txt", "M1.txt", "M0.txt"};
+    QString archivoSalida[tamaño_Arch] = {"I_D.bmp","P2.bmp","P1.bmp","I_O.bmp"};
+
+
 
     // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
-    unsigned char *pixelData = loadPixels(archivoEntrada, width, height);
+    unsigned char *pixelData = loadPixels(archivoSalida[0], width, height);
+
+    unsigned char *pixelDataTemp1 = new unsigned char[width * height * 3];
+
+    unsigned char *pixelDataTemp2 = new unsigned char[width * height * 3];
 
     // Carga la imagen I_M BMP en memoria dinámica y obtiene ancho y alto
     unsigned char *pixelImData = loadPixels(archivoIm, width, height);
@@ -71,41 +86,99 @@ int main(){
     int n_pixels = 0;
 
     // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
-    unsigned int *maskingData = loadSeedMasking("M1.txt", seed, n_pixels);
+    unsigned int *maskingData = loadSeedMasking(archivostxt[0], seed, n_pixels);
 
-    // Simula una modificación de la imagen asignando valores RGB incrementales
-    // (Esto es solo un ejemplo de manipulación artificial)
-    /*for (int i = 0; i < width * height * 3; i += 3) {
-        pixelData[i] = i;     // Canal rojo
-        pixelData[i + 1] = i; // Canal verde
-        pixelData[i + 2] = i; // Canal azul
-    }*/
+    memcpy(pixelDataTemp1, pixelData, width * height * 3); //Copia de pixelDataTemp1
+    numero_verificaciones = 0;
 
-    //ROTACIONES
-    /*for (int i = 0; i < width * height * 3; i += 3) {
-        pixelData[i] = static_cast<unsigned char>((pixelData[i]>>5) | (pixelData[i]<<(8-5)));     // Canal rojo
-        pixelData[i + 1] = static_cast<unsigned char>((pixelData[i+1]>>5) | (pixelData[i+1]<<(8-5))); // Canal verde
-        pixelData[i + 2] = static_cast<unsigned char>((pixelData[i+2]>>5) | (pixelData[i+2]<<(8-5))); // Canal azul
-    }*/
 
-    //XOR CON I_M
-    for (int i = 0; i < width * height * 3; i += 3) {
-        pixelData[i] = static_cast<unsigned char>(pixelData[i] ^ pixelImData[i]) ;     // Canal rojo
-        pixelData[i + 1] = static_cast<unsigned char>(pixelData[i + 1] ^ pixelImData[i + 1]); // Canal verde
-        pixelData[i + 2] = static_cast<unsigned char>(pixelData[i + 2] ^ pixelImData[i + 2]); // Canal azul
+
+    for(int j = 0; j <= 7; j++){
+
+        verificado = 1;
+
+        if(j == 0){
+            //XOR CON I_M
+            for (int i = 0; i < width * height * 3; i += 3) {
+                pixelDataTemp1[i] = static_cast<unsigned char>(pixelDataTemp1[i] ^ pixelImData[i]) ;     // Canal rojo
+                pixelDataTemp1[i + 1] = static_cast<unsigned char>(pixelDataTemp1[i + 1] ^ pixelImData[i + 1]); // Canal verde
+                pixelDataTemp1[i + 2] = static_cast<unsigned char>(pixelDataTemp1[i + 2] ^ pixelImData[i + 2]); // Canal azul
+            }
+        }
+        else{
+
+            //ROTACIONES
+            for (int i = 0; i < width * height * 3; i += 3) {
+                pixelDataTemp1[i] = static_cast<unsigned char>((pixelDataTemp1[i]>>j) | (pixelDataTemp1[i]<<(8-j)));     // Canal rojo
+                pixelDataTemp1[i + 1] = static_cast<unsigned char>((pixelDataTemp1[i+1]>>j) | (pixelDataTemp1[i+1]<<(8-j))); // Canal verde
+                pixelDataTemp1[i + 2] = static_cast<unsigned char>((pixelDataTemp1[i+2]>>j) | (pixelDataTemp1[i+2]<<(8-j))); // Canal azul
+
+            }
+        }
+
+        memcpy(pixelDataTemp2, pixelDataTemp1, width * height * 3); //Copia de pixelDataTemp1
+
+        //SUMAR MASCARA
+        for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
+
+            pixelDataTemp2[i + seed]     = static_cast<unsigned char>(pixelDataTemp2[i + seed]     + pixelMascaraData[i]);
+            pixelDataTemp2[i + 1 + seed] = static_cast<unsigned char>(pixelDataTemp2[i + 1 + seed] + pixelMascaraData[i + 1]);
+            pixelDataTemp2[i + 2 + seed] = static_cast<unsigned char>(pixelDataTemp2[i + 2 + seed] + pixelMascaraData[i + 2]);
+        }
+        // Comparar con el txt y decir si esta bueno
+
+        for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
+            if((maskingData[i] % 256) != static_cast<int>(pixelDataTemp2[i + seed])){
+                verificado = 0;
+            }
+
+        }
+        if(verificado == 1){
+            numero_verificaciones += 1;
+            // Exporta la imagen modificada a un nuevo archivo BMP
+            exportI = exportImage(pixelDataTemp1, width, height, archivoSalida[numero_verificaciones]);
+            // Muestra si la exportación fue exitosa (true o false)
+            cout << exportI << endl;
+            j = -1;
+            if(numero_verificaciones == tamaño_Arch_Txt){
+                j = 8;
+            }
+
+        }
+        /*else{
+            cout<<"No se cumple";
+        }*/
+
+        delete[] pixelDataTemp1;
+        pixelDataTemp1 = nullptr;
+        pixelDataTemp1 = loadPixels(archivoSalida[numero_verificaciones], width, height);
+
+        // Libera la memoria usada para los datos de enmascaramiento
+        if (maskingData != nullptr){
+            delete[] maskingData;
+            maskingData = nullptr;
+        }
+        n_pixels = 0;
+        seed = 0;
+        maskingData = loadSeedMasking(archivostxt[numero_verificaciones], seed, n_pixels);
+
+
     }
 
-    // Exporta la imagen modificada a un nuevo archivo BMP
-    bool exportI = exportImage(pixelData, width, height, archivoSalida);
+    // Libera la memoria usada para los píxeles
+    delete[] pixelDataTemp2;
+    pixelDataTemp2 = nullptr;
 
-    //SUMAR MASCARA
-    /*for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
 
-        pixelData[i + seed]     = static_cast<unsigned char>(pixelData[i + seed]     + pixelMascaraData[i]);
-        pixelData[i + 1 + seed] = static_cast<unsigned char>(pixelData[i + 1 + seed] + pixelMascaraData[i + 1]);
-        pixelData[i + 2 + seed] = static_cast<unsigned char>(pixelData[i + 2 + seed] + pixelMascaraData[i + 2]);
+    // Libera la memoria usada para los datos de enmascaramiento
+    if (maskingData != nullptr){
+        delete[] maskingData;
+        maskingData = nullptr;
+    }
 
-    }*/
+    // Libera la memoria usada para los píxeles
+    delete[] pixelDataTemp1;
+    pixelDataTemp1 = nullptr;
 
 
 
@@ -127,8 +200,7 @@ int main(){
 
 
 
-    // Muestra si la exportación fue exitosa (true o false)
-    cout << exportI << endl;
+
 
 
     // Libera la memoria usada de I_M para los píxeles
@@ -147,38 +219,16 @@ int main(){
              << maskingData[i + 2] << ")" << endl;
     }*/
 
-    // Comparar con el txt y decir si esta bueno
-    /*cuantos = 0;
-    for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
-        if((maskingData[i] % 256) != static_cast<int>(pixelData[i + seed])){
-            verificado = 0;
-        }
-        cout<<verificado;
-        cuantos+=1;
-    }
 
-    cout<<cuantos;
-
-    if(verificado == 1){
-        cout<<"Si se cumple";
-    }
-    else{
-        cout<<"No se cumple";
-    }
-    */
     //
 
     // Libera la memoria usada para los píxeles
     delete[] pixelData;
     pixelData = nullptr;
 
-    // Libera la memoria usada para los datos de enmascaramiento
-    if (maskingData != nullptr){
-        delete[] maskingData;
-        maskingData = nullptr;
-    }
-    cout<<endl<<"valor de semilla"<<seed<<endl;
-    cout<<endl<<"Cantidad de pixeles leidos"<<n_pixels<<endl;
+
+    //cout<<endl<<"valor de semilla"<<seed<<endl;
+    //cout<<endl<<"Cantidad de pixeles leidos"<<n_pixels<<endl;
 
     return 0; // Fin del programa
 }
