@@ -34,178 +34,197 @@
  * Asistencia de ChatGPT para mejorar la forma y presentación del código fuente
  */
 
-#include <fstream>
-#include <iostream>
-#include <QCoreApplication>
-#include <QImage>
+ #include <fstream>
+ #include <iostream>
+ #include <QCoreApplication>
+ #include <QImage>
+ 
+ using namespace std;
+ //------prototipos de funciones------------------
+ unsigned char* loadPixels(QString input, int &width, int &height);
+ bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida);
+ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
+ 
+ int main(){
+ 
 
-using namespace std;
-unsigned char* loadPixels(QString input, int &width, int &height);
-bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida);
-unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
+    // ---------Variables para almacenar los nombres de los archivos
+ 
+     QString archivoIm = "I_M.bmp";
+     QString archivomascara = "M.bmp";
+     //QString archivoId = "I_D.bmp";
+     // ---------Variables para almacenar las dimensiones de las imagenes
+     int height = 0;
+     int width = 0;
+     int heightmascara = 0;
+     int widthmascara = 0;
+     bool exportI;
+    
 
-int main(){
+     int tamaño_Arch_Txt=7;
+     int tamaño_Arch = tamaño_Arch_Txt+1;
+     
+     //------------definir direcciones de archivos--------------------
+ 
+     const char* archivostxt[tamaño_Arch_Txt] = {"M6.txt","M5.txt","M4.txt","M3.txt","M2.txt", "M1.txt", "M0.txt"};
+     QString archivoSalida[tamaño_Arch] = {"I_D.bmp","P6.bmp","P5.bmp","P4.bmp","P3.bmp","P2.bmp","P1.bmp","I_O.bmp"};
+ 
+     //-----------------carga de imagenes---------------------------- 
+ 
+     // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
+     unsigned char *pixelData = loadPixels(archivoSalida[0], width, height);
+ 
+     // Carga la imagen I_M BMP en memoria dinámica y obtiene ancho y alto
+     unsigned char *pixelImData = loadPixels(archivoIm, width, height);
+ 
+     // Carga la imagen MASCARA BMP en memoria dinámica y obtiene ancho y alto
+     unsigned char *pixelMascaraData = loadPixels(archivomascara, widthmascara, heightmascara);
+     
+     //----------------buferes temporales----------------------- 
+     
+     unsigned char *pixelDataTransform = new unsigned char[width * height * 3];
+     
+     unsigned char *pixelDataMask = new unsigned char[width * height * 3];
+     
 
-    bool verificado = 1;
-    int numero_verificaciones;
-    int tamaño_Arch, tamaño_Arch_Txt;
+     
+     //------------------cargar el primer txt-----------------------------
+     // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
+     int seed = 0;
+     int n_pixels = 0;
+ 
+     // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
+     unsigned int *maskingData = loadSeedMasking(archivostxt[0], seed, n_pixels);
+     
+     //------------copiar los datos de la imagen para manipularlos sin sobreescribirlos 
+ 
+     memcpy(pixelDataTransform, pixelData, width * height * 3); //Copia de pixelDataTemp1
 
-    QString archivoIm = "I_M.bmp";
-    QString archivomascara = "M.bmp";
+     //____para contar las las verificaciones con los Txt
 
-    // ---------Variables para almacenar las dimensiones de la imagen
-    int height = 0;
-    int width = 0;
-    int heightmascara = 0;
-    int widthmascara = 0;
-    bool exportI;
-
-    tamaño_Arch_Txt = 7;
-    tamaño_Arch = tamaño_Arch_Txt + 1;
-
-    //------------definir direcciones de archivos--------------------
-
-    char archivostxt[tamaño_Arch_Txt][10] = {"M6.txt","M5.txt","M4.txt","M3.txt","M2.txt", "M1.txt", "M0.txt"};
-    QString archivoSalida[tamaño_Arch] = {"I_D.bmp","P6.bmp","P5.bmp","P4.bmp","P3.bmp","P2.bmp","P1.bmp","I_O.bmp"};
-
-    //-----------------carga de imagenes----------------------------
-
-    // Carga la imagen BMP en memoria dinámica y obtiene ancho y alto
-    unsigned char *pixelData = loadPixels(archivoSalida[0], width, height);
-
-    // Carga la imagen I_M BMP en memoria dinámica y obtiene ancho y alto
-    unsigned char *pixelImData = loadPixels(archivoIm, width, height);
-
-    // Carga la imagen MASCARA BMP en memoria dinámica y obtiene ancho y alto
-    unsigned char *pixelMascaraData = loadPixels(archivomascara, widthmascara, heightmascara);
-
-    //----------------buferes temporales-----------------------
-
-    unsigned char *pixelDataTemp1 = new unsigned char[width * height * 3];
-
-    unsigned char *pixelDataTemp2 = new unsigned char[width * height * 3];
+     bool verificado = 1;
+     int numero_verificaciones=0;
+ 
+     //-----------ciclo principal para las transformaciones y verificaciones 
+ 
+     for(int j = 0; j <= 7; j++){
+ 
+         verificado = 1; //bandera de verificacion
 
 
-    //------------------cargar el txt-----------------------------
-    // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
-    int seed = 0;
-    int n_pixels = 0;
+         //________Realizamos las transformaciones________
+ 
+         if(j == 0){
+             //XOR CON I_M
+             for (int i = 0; i < width * height * 3; i += 3) {
+                 pixelDataTransform[i] = static_cast<unsigned char>(pixelDataTransform[i] ^ pixelImData[i]) ;     // Canal rojo
+                 pixelDataTransform[i + 1] = static_cast<unsigned char>(pixelDataTransform[i + 1] ^ pixelImData[i + 1]); // Canal verde
+                 pixelDataTransform[i + 2] = static_cast<unsigned char>(pixelDataTransform[i + 2] ^ pixelImData[i + 2]); // Canal azul
+             }
+         }
+         else{
+ 
+             //ROTACIONES ENTRE (1-7)
+             for (int i = 0; i < width * height * 3; i += 3) {
+                 pixelDataTransform[i] = static_cast<unsigned char>((pixelDataTransform[i]>>j) | (pixelDataTransform[i]<<(8-j)));     // Canal rojo
+                 pixelDataTransform[i + 1] = static_cast<unsigned char>((pixelDataTransform[i+1]>>j) | (pixelDataTransform[i+1]<<(8-j))); // Canal verde
+                 pixelDataTransform[i + 2] = static_cast<unsigned char>((pixelDataTransform[i+2]>>j) | (pixelDataTransform[i+2]<<(8-j))); // Canal azul
+ 
+             }
+         }
+ 
+         memcpy(pixelDataMask, pixelDataTransform, width * height * 3); //Copia de pixelDataTemp1
+ 
+         //_______sumamos la mascara a la transformacion previa__________
 
-    // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
-    unsigned int *maskingData = loadSeedMasking(archivostxt[0], seed, n_pixels);
+         for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
+ 
+             pixelDataMask[i + seed]     = static_cast<unsigned char>(pixelDataMask[i + seed]     + pixelMascaraData[i]);
+             pixelDataMask[i + 1 + seed] = static_cast<unsigned char>(pixelDataMask[i + 1 + seed] + pixelMascaraData[i + 1]);
+             pixelDataMask[i + 2 + seed] = static_cast<unsigned char>(pixelDataMask[i + 2 + seed] + pixelMascaraData[i + 2]);
+         }
+         //_____Realizar la verificacion byte a byte con el archivo txt____________
+ 
+         for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
+             if((maskingData[i] % 256) != static_cast<int>(pixelDataMask[i + seed])){
+                 verificado = 0;
+             }
+ 
+         }
+         //______verificacion correcta____________
 
-    //------------copiar los datos de la imagen para manipularlos sin sobreescribirlos
+         if(verificado == 1){
+             numero_verificaciones += 1;
 
-    memcpy(pixelDataTemp1, pixelData, width * height * 3); //Copia de pixelDataTemp1
-    numero_verificaciones = 0;
+             // Exporta la imagen modificada a un nuevo archivo BMP
+             exportI = exportImage(pixelDataTransform, width, height, archivoSalida[numero_verificaciones]);
 
-    //-----------ciclo principal para las transformaciones y verificaciones
 
-    for(int j = 0; j <= 7; j++){
+             // Muestra si la exportación fue exitosa (true o false)
+             cout << exportI << endl;
+             //descontamos el paso para no alterar la siguiente verificacion
+             j = -1;
 
-        verificado = 1;
+            //________verificamos un txt, procedememos a cargar el otro__________
 
-        if(j == 0){
-            //XOR CON I_M
-            for (int i = 0; i < width * height * 3; i += 3) {
-                pixelDataTemp1[i] = static_cast<unsigned char>(pixelDataTemp1[i] ^ pixelImData[i]) ;     // Canal rojo
-                pixelDataTemp1[i + 1] = static_cast<unsigned char>(pixelDataTemp1[i + 1] ^ pixelImData[i + 1]); // Canal verde
-                pixelDataTemp1[i + 2] = static_cast<unsigned char>(pixelDataTemp1[i + 2] ^ pixelImData[i + 2]); // Canal azul
-            }
-        }
-        else{
-
-            //ROTACIONES
-            for (int i = 0; i < width * height * 3; i += 3) {
-                pixelDataTemp1[i] = static_cast<unsigned char>((pixelDataTemp1[i]>>j) | (pixelDataTemp1[i]<<(8-j)));     // Canal rojo
-                pixelDataTemp1[i + 1] = static_cast<unsigned char>((pixelDataTemp1[i+1]>>j) | (pixelDataTemp1[i+1]<<(8-j))); // Canal verde
-                pixelDataTemp1[i + 2] = static_cast<unsigned char>((pixelDataTemp1[i+2]>>j) | (pixelDataTemp1[i+2]<<(8-j))); // Canal azul
-
-            }
-        }
-
-        memcpy(pixelDataTemp2, pixelDataTemp1, width * height * 3); //Copia de pixelDataTemp1
-
-        //SUMAR MASCARA
-        for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
-
-            pixelDataTemp2[i + seed]     = static_cast<unsigned char>(pixelDataTemp2[i + seed]     + pixelMascaraData[i]);
-            pixelDataTemp2[i + 1 + seed] = static_cast<unsigned char>(pixelDataTemp2[i + 1 + seed] + pixelMascaraData[i + 1]);
-            pixelDataTemp2[i + 2 + seed] = static_cast<unsigned char>(pixelDataTemp2[i + 2 + seed] + pixelMascaraData[i + 2]);
-        }
-        // Comparar con el txt y decir si esta bueno
-
-        for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
-            if((maskingData[i] % 256) != static_cast<int>(pixelDataTemp2[i + seed])){
-                verificado = 0;
-            }
-
-        }
-        if(verificado == 1){
-            numero_verificaciones += 1;
-            // Exporta la imagen modificada a un nuevo archivo BMP
-            exportI = exportImage(pixelDataTemp1, width, height, archivoSalida[numero_verificaciones]);
-            // Muestra si la exportación fue exitosa (true o false)
-            cout << exportI << endl;
-            j = -1;
-            if(numero_verificaciones == tamaño_Arch_Txt){
-                j = 8;
-            }
-
-        }
-
-        delete[] pixelDataTemp1;
-        pixelDataTemp1 = nullptr;
-        pixelDataTemp1 = loadPixels(archivoSalida[numero_verificaciones], width, height);
-
-        // Libera la memoria usada para los datos de enmascaramiento
-        if (maskingData != nullptr){
+            // Libera la memoria usada para los datos de enmascaramiento
             delete[] maskingData;
             maskingData = nullptr;
-        }
-        n_pixels = 0;
-        seed = 0;
-        maskingData = loadSeedMasking(archivostxt[numero_verificaciones], seed, n_pixels);
 
+            //cargamos el siguiente txt
+             n_pixels = 0;
+             seed = 0;
+             maskingData = loadSeedMasking(archivostxt[numero_verificaciones], seed, n_pixels);
 
-    }
+         }
 
-    // Libera la memoria usada para los píxeles
-    delete[] pixelDataTemp2;
-    pixelDataTemp2 = nullptr;
+         //salimos cuando ya hemos cumplido el total de pasos,no hay nada mas que verificar
+         if(numero_verificaciones == tamaño_Arch_Txt){
+             j = 8;
+         }
+ 
+         delete[] pixelDataTransform;
+         pixelDataTransform = nullptr;
+         pixelDataTransform = loadPixels(archivoSalida[numero_verificaciones], width, height);
 
-
-    // Libera la memoria usada para los datos de enmascaramiento
-    if (maskingData != nullptr){
-        delete[] maskingData;
-        maskingData = nullptr;
-    }
-
-    // Libera la memoria usada para los píxeles
-    delete[] pixelDataTemp1;
-    pixelDataTemp1 = nullptr;
-
-
-    // Libera la memoria usada de I_M para los píxeles
-    delete[] pixelImData;
-    pixelImData = nullptr;
-
-    // Libera la memoria usada de Mascara para los píxeles
-    delete[] pixelMascaraData;
-    pixelMascaraData = nullptr;
-
-
-    // Libera la memoria usada para los píxeles
-    delete[] pixelData;
-    pixelData = nullptr;
-
-
-    return 0; // Fin del programa
-}
-
-
-unsigned char* loadPixels(QString input, int &width, int &height){
-    /*
+     }
+ 
+     // Libera la memoria usada para los píxeles
+     delete[] pixelDataMask;
+     pixelDataMask = nullptr;
+ 
+ 
+     // Libera la memoria usada para los archivos de verificacion
+     if (maskingData != nullptr){
+         delete[] maskingData;
+         maskingData = nullptr;
+     }
+ 
+     // Libera la memoria usada para los píxeles
+     delete[] pixelDataTransform;
+     pixelDataTransform = nullptr;
+ 
+ 
+     // Libera la memoria usada de I_M para los píxeles
+     delete[] pixelImData;
+     pixelImData = nullptr;
+ 
+     // Libera la memoria usada de Mascara para los píxeles
+     delete[] pixelMascaraData;
+     pixelMascaraData = nullptr;
+ 
+ 
+     // Libera la memoria usada para los píxeles
+     delete[] pixelData;
+     pixelData = nullptr;
+ 
+ 
+     return 0; // Fin del programa
+ }
+ 
+ 
+ unsigned char* loadPixels(QString input, int &width, int &height){
+     /*
   * @brief Carga una imagen BMP desde un archivo y extrae los datos de píxeles en formato RGB.
   *
   * Esta función utiliza la clase QImage de Qt para abrir una imagen en formato BMP, convertirla al
@@ -221,42 +240,42 @@ unsigned char* loadPixels(QString input, int &width, int &height){
   *
   * @note Es responsabilidad del usuario liberar la memoria asignada al arreglo devuelto usando `delete[]`.
   */
-
-    // Cargar la imagen BMP desde el archivo especificado (usando Qt)
-    QImage imagen(input);
-
-    // Verifica si la imagen fue cargada correctamente
-    if (imagen.isNull()) {
-        cout << "Error: No se pudo cargar la imagen BMP." << std::endl;
-        return nullptr; // Retorna un puntero nulo si la carga falló
-    }
-
-    // Convierte la imagen al formato RGB888 (3 canales de 8 bits sin transparencia)
-    imagen = imagen.convertToFormat(QImage::Format_RGB888);
-
-    // Obtiene el ancho y el alto de la imagen cargada
-    width = imagen.width();
-    height = imagen.height();
-
-    // Calcula el tamaño total de datos (3 bytes por píxel: R, G, B)
-    int dataSize = width * height * 3;
-
-    // Reserva memoria dinámica para almacenar los valores RGB de cada píxel
-    unsigned char* pixelData = new unsigned char[dataSize];
-
-    // Copia cada línea de píxeles de la imagen Qt a nuestro arreglo lineal
-    for (int y = 0; y < height; ++y) {
-        const uchar* srcLine = imagen.scanLine(y);              // Línea original de la imagen con posible padding
-        unsigned char* dstLine = pixelData + y * width * 3;     // Línea destino en el arreglo lineal sin padding
-        memcpy(dstLine, srcLine, width * 3);                    // Copia los píxeles RGB de esa línea (sin padding)
-    }
-
-    // Retorna el puntero al arreglo de datos de píxeles cargado en memoria
-    return pixelData;
-}
-
-bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida){
-    /*
+ 
+     // Cargar la imagen BMP desde el archivo especificado (usando Qt)
+     QImage imagen(input);
+ 
+     // Verifica si la imagen fue cargada correctamente
+     if (imagen.isNull()) {
+         cout << "Error: No se pudo cargar la imagen BMP." << std::endl;
+         return nullptr; // Retorna un puntero nulo si la carga falló
+     }
+ 
+     // Convierte la imagen al formato RGB888 (3 canales de 8 bits sin transparencia)
+     imagen = imagen.convertToFormat(QImage::Format_RGB888);
+ 
+     // Obtiene el ancho y el alto de la imagen cargada
+     width = imagen.width();
+     height = imagen.height();
+ 
+     // Calcula el tamaño total de datos (3 bytes por píxel: R, G, B)
+     int dataSize = width * height * 3;
+ 
+     // Reserva memoria dinámica para almacenar los valores RGB de cada píxel
+     unsigned char* pixelData = new unsigned char[dataSize];
+ 
+     // Copia cada línea de píxeles de la imagen Qt a nuestro arreglo lineal
+     for (int y = 0; y < height; ++y) {
+         const uchar* srcLine = imagen.scanLine(y);              // Línea original de la imagen con posible padding
+         unsigned char* dstLine = pixelData + y * width * 3;     // Línea destino en el arreglo lineal sin padding
+         memcpy(dstLine, srcLine, width * 3);                    // Copia los píxeles RGB de esa línea (sin padding)
+     }
+ 
+     // Retorna el puntero al arreglo de datos de píxeles cargado en memoria
+     return pixelData;
+ }
+ 
+ bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida){
+     /*
   * @brief Exporta una imagen en formato BMP a partir de un arreglo de píxeles en formato RGB.
   *
   * Esta función crea una imagen de tipo QImage utilizando los datos contenidos en el arreglo dinámico
@@ -274,34 +293,34 @@ bool exportImage(unsigned char* pixelData, int width,int height, QString archivo
   *
   * @note La función no libera la memoria del arreglo pixelData; esta responsabilidad recae en el usuario.
   */
-
-    // Crear una nueva imagen de salida con el mismo tamaño que la original
-    // usando el formato RGB888 (3 bytes por píxel, sin canal alfa)
-    QImage outputImage(width, height, QImage::Format_RGB888);
-
-    // Copiar los datos de píxeles desde el buffer al objeto QImage
-    for (int y = 0; y < height; ++y) {
-        // outputImage.scanLine(y) devuelve un puntero a la línea y-ésima de píxeles en la imagen
-        // pixelData + y * width * 3 apunta al inicio de la línea y-ésima en el buffer (sin padding)
-        // width * 3 son los bytes a copiar (3 por píxel)
-        memcpy(outputImage.scanLine(y), pixelData + y * width * 3, width * 3);
-    }
-
-    // Guardar la imagen en disco como archivo BMP
-    if (!outputImage.save(archivoSalida, "BMP")) {
-        // Si hubo un error al guardar, mostrar mensaje de error
-        cout << "Error: No se pudo guardar la imagen BMP modificada.";
-        return false; // Indica que la operación falló
-    } else {
-        // Si la imagen fue guardada correctamente, mostrar mensaje de éxito
-        cout << "Imagen BMP modificada guardada como " << archivoSalida.toStdString() << endl;
-        return true; // Indica éxito
-    }
-
-}
-
-unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels){
-    /*
+ 
+     // Crear una nueva imagen de salida con el mismo tamaño que la original
+     // usando el formato RGB888 (3 bytes por píxel, sin canal alfa)
+     QImage outputImage(width, height, QImage::Format_RGB888);
+ 
+     // Copiar los datos de píxeles desde el buffer al objeto QImage
+     for (int y = 0; y < height; ++y) {
+         // outputImage.scanLine(y) devuelve un puntero a la línea y-ésima de píxeles en la imagen
+         // pixelData + y * width * 3 apunta al inicio de la línea y-ésima en el buffer (sin padding)
+         // width * 3 son los bytes a copiar (3 por píxel)
+         memcpy(outputImage.scanLine(y), pixelData + y * width * 3, width * 3);
+     }
+ 
+     // Guardar la imagen en disco como archivo BMP
+     if (!outputImage.save(archivoSalida, "BMP")) {
+         // Si hubo un error al guardar, mostrar mensaje de error
+         cout << "Error: No se pudo guardar la imagen BMP modificada.";
+         return false; // Indica que la operación falló
+     } else {
+         // Si la imagen fue guardada correctamente, mostrar mensaje de éxito
+         cout << "Imagen BMP modificada guardada como " << archivoSalida.toStdString() << endl;
+         return true; // Indica éxito
+     }
+ 
+ }
+ 
+ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels){
+     /*
   * @brief Carga la semilla y los resultados del enmascaramiento desde un archivo de texto.
   *
   * Esta función abre un archivo de texto que contiene una semilla en la primera línea y,
@@ -319,78 +338,78 @@ unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixel
   *
   * @note Es responsabilidad del usuario liberar la memoria reservada con delete[].
   */
-
-    // Abrir el archivo que contiene la semilla y los valores RGB
-    ifstream archivo(nombreArchivo);
-    if (!archivo.is_open()) {
-        // Verificar si el archivo pudo abrirse correctamente
-        cout << "No se pudo abrir el archivo." << endl;
-        return nullptr;
-    }
-
-    // Leer la semilla desde la primera línea del archivo
-    archivo >> seed;
-
-    int r, g, b;
-
-    // Contar cuántos grupos de valores RGB hay en el archivo
-    // Se asume que cada línea después de la semilla tiene tres valores (r, g, b)
-    while (archivo >> r >> g >> b) {
-        n_pixels++;  // Contamos la cantidad de píxeles
-    }
-
-    // Cerrar el archivo para volver a abrirlo desde el inicio
-    archivo.close();
-    archivo.open(nombreArchivo);
-
-    // Verificar que se pudo reabrir el archivo correctamente
-    if (!archivo.is_open()) {
-        cout << "Error al reabrir el archivo." << endl;
-        return nullptr;
-    }
-
-    // Reservar memoria dinámica para guardar todos los valores RGB
-    // Cada píxel tiene 3 componentes: R, G y B
-    unsigned int* RGB = new unsigned int[n_pixels * 3];
-
-    // Leer nuevamente la semilla desde el archivo (se descarta su valor porque ya se cargó antes)
-    archivo >> seed;
-
-    // Leer y almacenar los valores RGB uno por uno en el arreglo dinámico
-    for (int i = 0; i < n_pixels * 3; i += 3) {
-        archivo >> r >> g >> b;
-        RGB[i] = r;
-        RGB[i + 1] = g;
-        RGB[i + 2] = b;
-    }
-
-    // Cerrar el archivo después de terminar la lectura
-    archivo.close();
-
-    // Mostrar información de control en consola
-    cout << "Semilla: " << seed << endl;
-    cout << "Cantidad de píxeles leídos: " << n_pixels << endl;
-
-    // Retornar el puntero al arreglo con los datos RGB
-    return RGB;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
+     // Abrir el archivo que contiene la semilla y los valores RGB
+     ifstream archivo(nombreArchivo);
+     if (!archivo.is_open()) {
+         // Verificar si el archivo pudo abrirse correctamente
+         cout << "No se pudo abrir el archivo." << endl;
+         return nullptr;
+     }
+ 
+     // Leer la semilla desde la primera línea del archivo
+     archivo >> seed;
+ 
+     int r, g, b;
+ 
+     // Contar cuántos grupos de valores RGB hay en el archivo
+     // Se asume que cada línea después de la semilla tiene tres valores (r, g, b)
+     while (archivo >> r >> g >> b) {
+         n_pixels++;  // Contamos la cantidad de píxeles
+     }
+ 
+     // Cerrar el archivo para volver a abrirlo desde el inicio
+     archivo.close();
+     archivo.open(nombreArchivo);
+ 
+     // Verificar que se pudo reabrir el archivo correctamente
+     if (!archivo.is_open()) {
+         cout << "Error al reabrir el archivo." << endl;
+         return nullptr;
+     }
+ 
+     // Reservar memoria dinámica para guardar todos los valores RGB
+     // Cada píxel tiene 3 componentes: R, G y B
+     unsigned int* RGB = new unsigned int[n_pixels * 3];
+ 
+     // Leer nuevamente la semilla desde el archivo (se descarta su valor porque ya se cargó antes)
+     archivo >> seed;
+ 
+     // Leer y almacenar los valores RGB uno por uno en el arreglo dinámico
+     for (int i = 0; i < n_pixels * 3; i += 3) {
+         archivo >> r >> g >> b;
+         RGB[i] = r;
+         RGB[i + 1] = g;
+         RGB[i + 2] = b;
+     }
+ 
+     // Cerrar el archivo después de terminar la lectura
+     archivo.close();
+ 
+     // Mostrar información de control en consola
+     cout << "Semilla: " << seed << endl;
+     cout << "Cantidad de píxeles leídos: " << n_pixels << endl;
+ 
+     // Retornar el puntero al arreglo con los datos RGB
+     return RGB;
+ }
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
