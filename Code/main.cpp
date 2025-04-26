@@ -45,6 +45,8 @@
  bool exportImage(unsigned char* pixelData, int width,int height, QString archivoSalida);
  unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
  
+ void applyTransformation(unsigned char* pixelDataInput, unsigned char* pixelImData, int width, int height, int j, unsigned char* pixelDataOutput);
+
  int main(){
  
 
@@ -52,7 +54,6 @@
  
      QString archivoIm = "I_M.bmp";
      QString archivomascara = "M.bmp";
-     //QString archivoId = "I_D.bmp";
      // ---------Variables para almacenar las dimensiones de las imagenes
      int height = 0;
      int width = 0;
@@ -80,13 +81,14 @@
      // Carga la imagen MASCARA BMP en memoria dinámica y obtiene ancho y alto
      unsigned char *pixelMascaraData = loadPixels(archivomascara, widthmascara, heightmascara);
      
-     //----------------buferes temporales----------------------- 
-     
+     //----------------buferes temporales-----------------------
+
+     //para almacenar las transformaciones
      unsigned char *pixelDataTransform = new unsigned char[width * height * 3];
-     
+
+     //para almacenar la suma con la mascara para su posterior verificacion
      unsigned char *pixelDataMask = new unsigned char[width * height * 3];
      
-
      
      //------------------cargar el primer txt-----------------------------
      // Variables para almacenar la semilla y el número de píxeles leídos del archivo de enmascaramiento
@@ -96,9 +98,6 @@
      // Carga los datos de enmascaramiento desde un archivo .txt (semilla + valores RGB)
      unsigned int *maskingData = loadSeedMasking(archivostxt[0], seed, n_pixels);
      
-     //------------copiar los datos de la imagen para manipularlos sin sobreescribirlos 
- 
-     memcpy(pixelDataTransform, pixelData, width * height * 3); //Copia de pixelDataTemp1
 
      //____para contar las las verificaciones con los Txt
 
@@ -111,37 +110,38 @@
  
          verificado = 1; //bandera de verificacion
 
+        //_____________tranformaciones_____________________
 
-         //________Realizamos las transformaciones________
- 
-         if(j == 0){
+        applyTransformation(pixelData, pixelImData, width, height, j, pixelDataTransform);
+
+
+        /* if(j == 0){
              //XOR CON I_M
              for (int i = 0; i < width * height * 3; i += 3) {
-                 pixelDataTransform[i] = static_cast<unsigned char>(pixelDataTransform[i] ^ pixelImData[i]) ;     // Canal rojo
-                 pixelDataTransform[i + 1] = static_cast<unsigned char>(pixelDataTransform[i + 1] ^ pixelImData[i + 1]); // Canal verde
-                 pixelDataTransform[i + 2] = static_cast<unsigned char>(pixelDataTransform[i + 2] ^ pixelImData[i + 2]); // Canal azul
+                 pixelDataTransform[i] = static_cast<unsigned char>(pixelData[i] ^ pixelImData[i]) ;     // Canal rojo
+                 pixelDataTransform[i + 1] = static_cast<unsigned char>(pixelData[i + 1] ^ pixelImData[i + 1]); // Canal verde
+                 pixelDataTransform[i + 2] = static_cast<unsigned char>(pixelData[i + 2] ^ pixelImData[i + 2]); // Canal azul
              }
          }
          else{
  
              //ROTACIONES ENTRE (1-7)
              for (int i = 0; i < width * height * 3; i += 3) {
-                 pixelDataTransform[i] = static_cast<unsigned char>((pixelDataTransform[i]>>j) | (pixelDataTransform[i]<<(8-j)));     // Canal rojo
-                 pixelDataTransform[i + 1] = static_cast<unsigned char>((pixelDataTransform[i+1]>>j) | (pixelDataTransform[i+1]<<(8-j))); // Canal verde
-                 pixelDataTransform[i + 2] = static_cast<unsigned char>((pixelDataTransform[i+2]>>j) | (pixelDataTransform[i+2]<<(8-j))); // Canal azul
+                 pixelDataTransform[i] = static_cast<unsigned char>((pixelData[i]>>j) | (pixelData[i]<<(8-j)));     // Canal rojo
+                 pixelDataTransform[i + 1] = static_cast<unsigned char>((pixelData[i+1]>>j) | (pixelData[i+1]<<(8-j))); // Canal verde
+                 pixelDataTransform[i + 2] = static_cast<unsigned char>((pixelData[i+2]>>j) | (pixelData[i+2]<<(8-j))); // Canal azul
  
              }
          }
- 
-         memcpy(pixelDataMask, pixelDataTransform, width * height * 3); //Copia de pixelDataTemp1
+        */
  
          //_______sumamos la mascara a la transformacion previa__________
 
          for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
  
-             pixelDataMask[i + seed]     = static_cast<unsigned char>(pixelDataMask[i + seed]     + pixelMascaraData[i]);
-             pixelDataMask[i + 1 + seed] = static_cast<unsigned char>(pixelDataMask[i + 1 + seed] + pixelMascaraData[i + 1]);
-             pixelDataMask[i + 2 + seed] = static_cast<unsigned char>(pixelDataMask[i + 2 + seed] + pixelMascaraData[i + 2]);
+             pixelDataMask[i + seed]     = static_cast<unsigned char>(pixelDataTransform[i + seed]     + pixelMascaraData[i]);
+             pixelDataMask[i + 1 + seed] = static_cast<unsigned char>(pixelDataTransform[i + 1 + seed] + pixelMascaraData[i + 1]);
+             pixelDataMask[i + 2 + seed] = static_cast<unsigned char>(pixelDataTransform[i + 2 + seed] + pixelMascaraData[i + 2]);
          }
          //_____Realizar la verificacion byte a byte con el archivo txt____________
  
@@ -158,6 +158,10 @@
 
              // Exporta la imagen modificada a un nuevo archivo BMP
              exportI = exportImage(pixelDataTransform, width, height, archivoSalida[numero_verificaciones]);
+
+             //____ahora nuestra salida verificada sera nuestra proxima entrada______
+
+             memcpy(pixelData, pixelDataTransform, width * height * 3); //Copia de pixelDataTransform
 
 
              // Muestra si la exportación fue exitosa (true o false)
@@ -183,9 +187,6 @@
              j = 8;
          }
  
-         delete[] pixelDataTransform;
-         pixelDataTransform = nullptr;
-         pixelDataTransform = loadPixels(archivoSalida[numero_verificaciones], width, height);
 
      }
  
@@ -222,7 +223,30 @@
      return 0; // Fin del programa
  }
  
- 
+ void applyTransformation(unsigned char* pixelDataInput, unsigned char* pixelImData, int width, int height, int j, unsigned char* pixelDataOutput) {
+     int totalBytes = width * height * 3;
+
+     if (j == 0) {
+         // XOR CON I_M
+         for (int i = 0; i < totalBytes; ++i) {
+             pixelDataOutput[i] = pixelDataInput[i] ^ pixelImData[i];
+         }
+     } else if (j > 0 && j < 8) {
+         // ROTACIONES CIRCULARES A LA DERECHA (1-7 bits)
+         for (int i = 0; i < totalBytes; ++i) {
+             pixelDataOutput[i] = (pixelDataInput[i] >> j) | (pixelDataInput[i] << (8 - j));
+         }
+     } else {
+         // Copia simple si j no es una transformación válida (o si es >= 8)
+         // Podrías añadir un mensaje de advertencia o error si j está fuera de rango.
+         memcpy(pixelDataOutput, pixelDataInput, totalBytes);
+         if (j != -1) { // No mostrar advertencia si es -1 (caso especial del bucle)
+             cout << "Advertencia: Valor de j (" << j << ") no corresponde a una transformacion definida. Se copian los datos." << endl;
+         }
+     }
+ }
+
+
  unsigned char* loadPixels(QString input, int &width, int &height){
      /*
   * @brief Carga una imagen BMP desde un archivo y extrae los datos de píxeles en formato RGB.
