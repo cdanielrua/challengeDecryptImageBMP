@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
+<<<<<<< HEAD
 <!-- Written by QtCreator 16.0.0, 2025-04-24T18:30:06. -->
+=======
+<!-- Written by QtCreator 16.0.0, 2025-04-24T19:08:14. -->
+>>>>>>> ddcb918 (verificamos el caso 2 organizamos el codigo y eliminamos codigo basura, para el paso posterior de crear funciones)
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -246,12 +250,20 @@
     <value type="QString" key="PerfRecordArgsId">-e cpu-cycles --call-graph &quot;dwarf,4096&quot; -F 250</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:</value>
+<<<<<<< HEAD
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/tomam/OneDrive/Documentos/Desafio1Infoll/Code/ProjectParams.pro</value>
+=======
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/Usuario/Documents/2025-1/info2/Desafio1/Code/ProjectParams.pro</value>
+>>>>>>> ddcb918 (verificamos el caso 2 organizamos el codigo y eliminamos codigo basura, para el paso posterior de crear funciones)
     <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
+<<<<<<< HEAD
     <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Users/tomam/OneDrive/Documentos/Desafio1Infoll/Code/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug</value>
+=======
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Users/Usuario/Documents/2025-1/info2/DesafíoI Publicar/DesafíoI/Code/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug</value>
+>>>>>>> ddcb918 (verificamos el caso 2 organizamos el codigo y eliminamos codigo basura, para el paso posterior de crear funciones)
    </valuemap>
    <value type="qlonglong" key="ProjectExplorer.Target.RunConfigurationCount">1</value>
   </valuemap>
