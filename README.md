@@ -1,16 +1,15 @@
+🔓 Desencriptación de Imágenes BMP
+Este proyecto describe el proceso de desencriptar imágenes BMP utilizando C++, aplicando una serie de transformaciones distribuidas en funciones específicas para recuperar los datos originales.
 
-Para desencriptar estas imágenes con C++, seguiremos una serie de pasos distribuidos en distintas funciones.
+La primera función se encarga de realizar transformaciones sobre bloques de ocho bits. Entre las transformaciones disponibles se encuentran: desplazamiento a la derecha, desplazamiento a la izquierda, rotación a la derecha y rotación a la izquierda.
 
-La primera función se encargará de realizar las transformaciones sobre los datos. Estas transformaciones pueden ser: desplazamiento a la derecha, desplazamiento a la izquierda, rotación a la derecha o rotación a la izquierda, todas aplicadas a bloques de ocho bits.
+Una vez aplicada alguna transformación, interviene la función de enmascaramiento, que suma el resultado anterior con una máscara específica para modificar los datos de forma controlada.
 
-Una vez probada alguna de estas transformaciones, se aplicará la segunda función: el enmascaramiento. Esta función sumará el resultado de la transformación con una máscara específica.
+Posteriormente, se utiliza la función de verificación, la cual compara el resultado de las operaciones con los datos de referencia almacenados en un archivo .txt. Si la verificación es exitosa, se guarda la imagen parcial correspondiente y el proceso continúa con los siguientes bloques de datos.
 
-Luego, entra en juego la función de verificación. Esta se encargará de comprobar si, después de aplicar la transformación y el enmascaramiento, el resultado coincide con los datos contenidos en un archivo .txt que usamos como referencia. Si la verificación es exitosa, se guarda la imagen correspondiente y se repite el proceso con los siguientes bloques de datos.
+En caso de falla en la verificación, se prueba otra transformación diferente, repitiendo el ciclo de transformación, enmascaramiento y verificación hasta encontrar la combinación correcta.
 
-En caso de que la verificación falle, se prueba con una transformación distinta entre las disponibles, y se repite el proceso de transformación, enmascaramiento y verificación.
-
-Este procedimiento continúa hasta que todas las verificaciones coincidan con los datos de los archivos .txt, logrando así reconstruir por completo la imagen original.
-
+Este procedimiento se repite hasta que todos los bloques de la imagen sean verificados exitosamente, logrando así reconstruir completamente la imagen BMP original.
 
 
 ---
