@@ -1,4 +1,5 @@
-🔓 Desencriptación de Imágenes BMP
+## 🔓 Desencriptación de Imágenes BMP
+
 Este proyecto describe el proceso de desencriptar imágenes BMP utilizando C++, aplicando una serie de transformaciones distribuidas en funciones específicas para recuperar los datos originales.
 
 La primera función se encarga de realizar transformaciones sobre bloques de ocho bits. Entre las transformaciones disponibles se encuentran: desplazamiento a la derecha, desplazamiento a la izquierda, rotación a la derecha y rotación a la izquierda.
