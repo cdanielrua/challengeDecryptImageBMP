@@ -46,6 +46,8 @@
  unsigned int* loadSeedMasking(const char* nombreArchivo, int &seed, int &n_pixels);
  
  void applyTransformation(unsigned char* pixelDataInput, unsigned char* pixelImData, int width, int height, int j, unsigned char* pixelDataOutput);
+ void applyMask(unsigned char* pixelDataTransformed, unsigned char* pixelMascaraData, int widthMascara, int heightMascara, int seed, unsigned char* pixelDataMaskOutput);
+ bool verifyMaskedData(unsigned char* pixelDataMask, unsigned int* maskingData, int widthMascara, int heightMascara, int seed);
 
  int main(){
  
@@ -137,21 +139,30 @@
  
          //_______sumamos la mascara a la transformacion previa__________
 
-         for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
+        applyMask(pixelDataTransform, pixelMascaraData, widthmascara, heightmascara, seed, pixelDataMask);
+
+
+        /* for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
  
              pixelDataMask[i + seed]     = static_cast<unsigned char>(pixelDataTransform[i + seed]     + pixelMascaraData[i]);
              pixelDataMask[i + 1 + seed] = static_cast<unsigned char>(pixelDataTransform[i + 1 + seed] + pixelMascaraData[i + 1]);
              pixelDataMask[i + 2 + seed] = static_cast<unsigned char>(pixelDataTransform[i + 2 + seed] + pixelMascaraData[i + 2]);
          }
+
+        */
+
          //_____Realizar la verificacion byte a byte con el archivo txt____________
  
-         for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
+        /* for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
              if((maskingData[i] % 256) != static_cast<int>(pixelDataMask[i + seed])){
                  verificado = 0;
              }
  
-         }
+         }*/
          //______verificacion correcta____________
+
+        verificado = verifyMaskedData(pixelDataMask, maskingData, widthmascara, heightmascara, seed);
+
 
          if(verificado == 1){
              numero_verificaciones += 1;
@@ -245,7 +256,34 @@
          }
      }
  }
+ void applyMask(unsigned char* pixelDataTransformed, unsigned char* pixelMascaraData, int widthMascara, int heightMascara, int seed, unsigned char* pixelDataMaskOutput) {
+     int maskBytes = widthMascara * heightMascara * 3;
 
+
+     // Aplicar la suma de la máscara en la región especificada
+     for (int i = 0; i < maskBytes; ++i) {
+         // Asegurarse de no escribir fuera de los límites (ya verificado en main)
+         // La suma usa aritmética de unsigned char (módulo 256)
+         pixelDataMaskOutput[i + seed] = pixelDataTransformed[i + seed] + pixelMascaraData[i];
+     }
+ }
+
+ bool verifyMaskedData(unsigned char* pixelDataMask, unsigned int* maskingData, int widthMascara, int heightMascara, int seed) {
+     int bytesToVerify = widthMascara * heightMascara * 3;
+
+     for (int i = 0; i < bytesToVerify; ++i) {
+         // Compara el byte en pixelDataMask con el byte menos significativo de maskingData
+         if (static_cast<unsigned int>(pixelDataMask[i + seed]) != (maskingData[i] % 256)) {
+             // Si un byte no coincide, la verificación falla
+             // Opcional: Imprimir qué byte falló para depuración
+             //cout << "Verificacion fallida en byte relativo: " << i << " (offset: " << seed << "). Esperado: " << (maskingData[i] % 256) << ", Obtenido: " << static_cast<int>(pixelDataMask[i + seed]) << endl;
+             return false;
+         }
+     }
+     // Si todos los bytes coincidieron, la verificación es exitosa
+     cout << "Verificacion exitosa!" << endl;
+     return true;
+ }
 
  unsigned char* loadPixels(QString input, int &width, int &height){
      /*
