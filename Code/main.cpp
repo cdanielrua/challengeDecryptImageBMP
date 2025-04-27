@@ -50,7 +50,6 @@
  bool verifyMaskedData(unsigned char* pixelDataMask, unsigned int* maskingData, int widthMascara, int heightMascara, int seed);
 
  int main(){
- 
 
     // ---------Variables para almacenar los nombres de los archivos
  
@@ -101,65 +100,28 @@
      unsigned int *maskingData = loadSeedMasking(archivostxt[0], seed, n_pixels);
      
 
-     //____para contar las las verificaciones con los Txt
+     //__________para contar las las verificaciones con los txt_______________
 
      bool verificado = 1;
      int numero_verificaciones=0;
  
-     //-----------ciclo principal para las transformaciones y verificaciones 
+     //-----------ciclo principal para las transformaciones y verificaciones___________
  
      for(int j = 0; j <= 7; j++){
  
          verificado = 1; //bandera de verificacion
 
-        //_____________tranformaciones_____________________
+        //______________________tranformaciones_____________________
 
         applyTransformation(pixelData, pixelImData, width, height, j, pixelDataTransform);
 
-
-        /* if(j == 0){
-             //XOR CON I_M
-             for (int i = 0; i < width * height * 3; i += 3) {
-                 pixelDataTransform[i] = static_cast<unsigned char>(pixelData[i] ^ pixelImData[i]) ;     // Canal rojo
-                 pixelDataTransform[i + 1] = static_cast<unsigned char>(pixelData[i + 1] ^ pixelImData[i + 1]); // Canal verde
-                 pixelDataTransform[i + 2] = static_cast<unsigned char>(pixelData[i + 2] ^ pixelImData[i + 2]); // Canal azul
-             }
-         }
-         else{
- 
-             //ROTACIONES ENTRE (1-7)
-             for (int i = 0; i < width * height * 3; i += 3) {
-                 pixelDataTransform[i] = static_cast<unsigned char>((pixelData[i]>>j) | (pixelData[i]<<(8-j)));     // Canal rojo
-                 pixelDataTransform[i + 1] = static_cast<unsigned char>((pixelData[i+1]>>j) | (pixelData[i+1]<<(8-j))); // Canal verde
-                 pixelDataTransform[i + 2] = static_cast<unsigned char>((pixelData[i+2]>>j) | (pixelData[i+2]<<(8-j))); // Canal azul
- 
-             }
-         }
-        */
  
          //_______sumamos la mascara a la transformacion previa__________
 
         applyMask(pixelDataTransform, pixelMascaraData, widthmascara, heightmascara, seed, pixelDataMask);
 
 
-        /* for (int i = 0; i < widthmascara * heightmascara * 3; i += 3) {
- 
-             pixelDataMask[i + seed]     = static_cast<unsigned char>(pixelDataTransform[i + seed]     + pixelMascaraData[i]);
-             pixelDataMask[i + 1 + seed] = static_cast<unsigned char>(pixelDataTransform[i + 1 + seed] + pixelMascaraData[i + 1]);
-             pixelDataMask[i + 2 + seed] = static_cast<unsigned char>(pixelDataTransform[i + 2 + seed] + pixelMascaraData[i + 2]);
-         }
-
-        */
-
          //_____Realizar la verificacion byte a byte con el archivo txt____________
- 
-        /* for (int i = 0; i < widthmascara * heightmascara * 3 ; i += 1) {
-             if((maskingData[i] % 256) != static_cast<int>(pixelDataMask[i + seed])){
-                 verificado = 0;
-             }
- 
-         }*/
-         //______verificacion correcta____________
 
         verificado = verifyMaskedData(pixelDataMask, maskingData, widthmascara, heightmascara, seed);
 
@@ -174,11 +136,19 @@
 
              memcpy(pixelData, pixelDataTransform, width * height * 3); //Copia de pixelDataTransform
 
+             if(j==0){
+                 cout<<"la transformacion fue un xor"<<endl;
+             }
+             else{
+                 cout<<"la transformacion fue una rotacion a la derecha de "<<j<<endl;
+             }
 
-             // Muestra si la exportación fue exitosa (true o false)
-             cout << exportI << endl;
-             //descontamos el paso para no alterar la siguiente verificacion
-             j = -1;
+
+             // Muestra si la exportación fue exitosa
+             cout << "Estado de expotación: "<<exportI << endl;
+
+             // Reiniciar el tipo de transformación para la siguiente ronda de verificaciones
+             j = -1; // Se incrementará a 0 al inicio del siguiente ciclo
 
             //________verificamos un txt, procedememos a cargar el otro__________
 
@@ -200,37 +170,37 @@
  
 
      }
- 
-     // Libera la memoria usada para los píxeles
+
+     //----------- Liberación de memoria -----------------------
+     cout << "Limpiando memoria..." << endl;
+
+     // Libera la memoria usada para los píxeles de la imagen principal
+     delete[] pixelData;
+     pixelData = nullptr;
+
+     // Libera la memoria usada para los píxeles de la imagen I_M
+     delete[] pixelImData;
+     pixelImData = nullptr;
+
+     // Libera la memoria usada para los píxeles de la máscara
+     delete[] pixelMascaraData;
+     pixelMascaraData = nullptr;
+
+     // Libera la memoria usada para el buffer de transformación
+     delete[] pixelDataTransform;
+     pixelDataTransform = nullptr;
+
+     // Libera la memoria usada para el buffer de suma de máscara
      delete[] pixelDataMask;
      pixelDataMask = nullptr;
- 
- 
-     // Libera la memoria usada para los archivos de verificacion
-     if (maskingData != nullptr){
+
+     // Libera la memoria usada para los datos del último archivo de verificación si aún existe
+     if (maskingData != nullptr) {
          delete[] maskingData;
          maskingData = nullptr;
      }
- 
-     // Libera la memoria usada para los píxeles
-     delete[] pixelDataTransform;
-     pixelDataTransform = nullptr;
- 
- 
-     // Libera la memoria usada de I_M para los píxeles
-     delete[] pixelImData;
-     pixelImData = nullptr;
- 
-     // Libera la memoria usada de Mascara para los píxeles
-     delete[] pixelMascaraData;
-     pixelMascaraData = nullptr;
- 
- 
-     // Libera la memoria usada para los píxeles
-     delete[] pixelData;
-     pixelData = nullptr;
- 
- 
+
+     cout << "Programa finalizado." << endl;
      return 0; // Fin del programa
  }
  
@@ -247,23 +217,14 @@
          for (int i = 0; i < totalBytes; ++i) {
              pixelDataOutput[i] = (pixelDataInput[i] >> j) | (pixelDataInput[i] << (8 - j));
          }
-     } else {
-         // Copia simple si j no es una transformación válida (o si es >= 8)
-         // Podrías añadir un mensaje de advertencia o error si j está fuera de rango.
-         memcpy(pixelDataOutput, pixelDataInput, totalBytes);
-         if (j != -1) { // No mostrar advertencia si es -1 (caso especial del bucle)
-             cout << "Advertencia: Valor de j (" << j << ") no corresponde a una transformacion definida. Se copian los datos." << endl;
-         }
      }
  }
  void applyMask(unsigned char* pixelDataTransformed, unsigned char* pixelMascaraData, int widthMascara, int heightMascara, int seed, unsigned char* pixelDataMaskOutput) {
      int maskBytes = widthMascara * heightMascara * 3;
 
 
-     // Aplicar la suma de la máscara en la región especificada
      for (int i = 0; i < maskBytes; ++i) {
-         // Asegurarse de no escribir fuera de los límites (ya verificado en main)
-         // La suma usa aritmética de unsigned char (módulo 256)
+
          pixelDataMaskOutput[i + seed] = pixelDataTransformed[i + seed] + pixelMascaraData[i];
      }
  }
@@ -272,11 +233,9 @@
      int bytesToVerify = widthMascara * heightMascara * 3;
 
      for (int i = 0; i < bytesToVerify; ++i) {
-         // Compara el byte en pixelDataMask con el byte menos significativo de maskingData
+
          if (static_cast<unsigned int>(pixelDataMask[i + seed]) != (maskingData[i] % 256)) {
-             // Si un byte no coincide, la verificación falla
-             // Opcional: Imprimir qué byte falló para depuración
-             //cout << "Verificacion fallida en byte relativo: " << i << " (offset: " << seed << "). Esperado: " << (maskingData[i] % 256) << ", Obtenido: " << static_cast<int>(pixelDataMask[i + seed]) << endl;
+
              return false;
          }
      }
