@@ -1,25 +1,15 @@
 flowchart TD
-  %% Inicio
-  A([Start]) 
-    --> B[Initialize: i = 0, Current = I_D]
-
-  %% Bucle principal: i < n ?
-  B --> C{ i < n ? }
-  C -- No --> D[Output Current as I₀] --> E([End])
-
-  %% Antes de probar transformaciones, inicializar índice j
-  C -- Yes --> F[Set j = 0]
-
-  %% Bucle interno: probar cada transformación
-  subgraph InnerLoop ["Inner loop: try transformations"]
-    direction TB
-    F --> G{ j ≤ 7 ? }
-    G -- No --> H[Error: no valid transformation] --> E
-
-    G -- Yes --> I[Choose transformation T₍ⱼ₎]
-    I --> J[Apply T₍ⱼ₎ to Current → P]
-    J --> K[Compute M_check = P + M]
-    K --> L{ M_check valid? }
-    L -- Yes --> M[Accept P: Current = P, i = i + 1] --> C
-    L -- No --> N[Increment j: j = j + 1] --> G
-  end
+    A[Inicio] --> B[Cargar imágenes BMP<br/>I_O.bmp → pixelData<br/>I_M.bmp → pixelImData<br/>M.bmp → pixelMascaraData]
+    B --> C[Reservar buffers<br/>pixelDataTransform<br/>pixelDataMask]
+    C --> D[Cargar primer txt<br/>loadSeedMasking semilla y n_pixels]
+    D --> E[Inicializar<br/>j = 0<br/>numero_verificaciones = 0<br/>verificado = true]
+    E --> F{j &lt;= 7}
+    F -- Si --> G[applyTransformation]
+    G --> H[applyMask]
+    H --> I{verifyMaskedData?}
+    I -- true --> J[numero_verificaciones += 1<br/>exportImage<br/>copiar transform a original<br/>j = -1<br/>liberar maskingData<br/>loadSeedMasking siguiente txt]
+    J --> F
+    I -- false --> K[j += 1]
+    K --> F
+    F -- No --> L[Liberar memoria<br/>pixelData<br/>pixelImData<br/>pixelMascaraData<br/>pixelDataTransform<br/>pixelDataMask<br/>maskingData]
+    L --> M[Fin]
